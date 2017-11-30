@@ -128,8 +128,24 @@
 ;; jooksuta (load "music")
 ;; (in-ns 'overtonetut.music)
 ;; refreshimiseks (require 'overtonetut.music :reload)
+(defn piano-chord
+  ([root chord-name]
+    (doseq [note (chord root chord-name)]
+      (sampled-piano note)))
+  ([root chord-name inv]
+    (doseq [note (chord root chord-name inv)]
+      (sampled-piano note))))
 
-;; function definition
-(defn piano-chord [root chord-name]
-  (doseq [note (chord root chord-name)]
-    (sampled-piano note)))
+(defn play-harmony []
+  (let [time (now)]
+    (at         time  (piano-chord :c3 :major7))
+    (at (+ 2000 time) (piano-chord :d3 :minor7))
+    (at (+ 4000 time) (piano-chord :e3 :minor7))
+    (at (+ 6000 time) (piano-chord :f3 :major7))))
+
+(defn bossa-harmony []
+  (let [time (now)]
+    (at time (piano-chord :d3 :m9))
+    (at (+ 2000 time) (piano-chord :a3 :m6))
+    (at (+ 4000 time) (piano-chord :e3 :m9))
+    (at (+ 6000 time) (piano-chord :b3 :m6))))
