@@ -1,5 +1,6 @@
 (ns overtonetut.music
-  (:use [overtone.core]))
+  (:use [overtone.core]
+        [overtone.inst.sampled-piano]))
 ;;tested in Overtone 0.6-dev
 ;;add [overtone.sc.machinery.defcgen] to ns :use clause for 0.5.0
 
@@ -127,3 +128,8 @@
 ;; jooksuta (load "music")
 ;; (in-ns 'overtonetut.music)
 ;; refreshimiseks (require 'overtonetut.music :reload)
+
+;; function definition
+(defn piano-chord [root chord-name]
+  (doseq [note (chord root chord-name)]
+    (sampled-piano note)))
