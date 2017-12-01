@@ -143,9 +143,39 @@
     (at (+ 4000 time) (piano-chord :e3 :minor7))
     (at (+ 6000 time) (piano-chord :f3 :major7))))
 
+
 (defn bossa-harmony []
   (let [time (now)]
     (at time (piano-chord :d3 :m9))
     (at (+ 2000 time) (piano-chord :a3 :m6))
     (at (+ 4000 time) (piano-chord :e3 :m9))
     (at (+ 6000 time) (piano-chord :b3 :m6))))
+
+
+(def scale-degrees [:i :ii :iii :iv :v :vi :vii])
+    
+; (def pitches (degrees->pitches scale-degrees :pentatonic :C4))
+(def pitches (scale :c3 :pentatonic))
+
+(defn play [time notes sep]
+  (let [note (first notes)]
+    (when note
+      (at time (sampled-piano note))
+    (let [next-time (+ time sep)]
+      (apply-at next-time play [next-time (rest notes) sep])))))
+
+(defn play-notes [time notes sep]
+  (at time (sampled-piano (first notes))))
+
+
+(def metro (metronome 160))
+
+;; We can use recursion to keep playing the chord progression
+(defn chord-progression-beat [m beat-num]
+  (at (m (+ 0 beat-num)) (piano-chord :C4 :major))
+  (at (m (+ 4 beat-num)) (piano-chord :G3 :major))
+  (at (m (+ 8 beat-num)) (piano-chord :A3 :minor))
+  (at (m (+ 12 beat-num)) (piano-chord :F3 :major))
+  (apply-at (m (+ 16 beat-num)) chord-progression-beat m (+ 16 beat-num) [])
+)
+(chord-progression-beat metro (metro))
