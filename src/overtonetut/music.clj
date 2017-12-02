@@ -178,4 +178,40 @@
   (at (m (+ 12 beat-num)) (piano-chord :F3 :major))
   (apply-at (m (+ 16 beat-num)) chord-progression-beat m (+ 16 beat-num) [])
 )
-(chord-progression-beat metro (metro))
+; (chord-progression-beat metro (metro))
+
+(definst kick [freq 120 dur 0.3 width 0.5]
+  (let [freq-env (* freq (env-gen (perc 0 (* 0.99 dur))))
+        env (env-gen (perc 0.01 dur) 1 1 0 1 FREE)
+        sqr (* (env-gen (perc 0 0.01)) (pulse (* 2 freq) width))
+        src (sin-osc freq-env)
+        drum (+ sqr (* env src))]
+    (compander drum drum 0.2 1 0.1 0.01 0.01)))
+
+;(kick)
+
+(definst c-hat [amp 0.8 t 0.04]
+  (let [env (env-gen (perc 0.001 t) 1 1 0 1 FREE)
+        noise (white-noise)
+        sqr (* (env-gen (perc 0.01 0.04)) (pulse 880 0.2))
+        filt (bpf (+ sqr noise) 9000 0.5)]
+    (* amp env filt)))
+
+;(c-hat)
+
+(definst hi-hat1 [strum 0.1]
+  (pan2 (* (env-gen (perc 0 strum :curve -9)) (white-noise))))
+
+
+; hi pass filter, multiply by 2
+(definst hi-hat2 [strum 0.2]
+  (pan2 (* 2 (env-gen (perc 0 strum :curve -9)) (hpf (white-noise) 9000))))
+
+(defn play-pattern [cur-t sep-t seq sound]
+  (at cur-t (when (first seq) (apply sound (first seq))))
+  (let [new-t (+ cur-t sep-t)]
+    (apply-by new-t #'play-pattern [new-t sep-t (rest seq) sound])))
+
+(play-pattern (now) 200 (cycle [[] nil [] nil [] nil [0.5] nil]) hi-hat2)
+; (play-pattern (now) 200 (cycle [[] nil nil nil [] nil [0.5] nil]) hi-hat2)
+
