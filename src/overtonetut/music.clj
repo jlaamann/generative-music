@@ -154,8 +154,8 @@
 
 (def scale-degrees [:i :ii :iii :iv :v :vi :vii])
     
-; (def pitches (degrees->pitches scale-degrees :pentatonic :C4))
-(def pitches (scale :c3 :pentatonic))
+(def pitches (degrees->pitches scale-degrees :pentatonic :C4))
+; (def pitches (scale :c3 :pentatonic))
 
 (defn play [time notes sep]
   (let [note (first notes)]
@@ -212,6 +212,19 @@
   (let [new-t (+ cur-t sep-t)]
     (apply-by new-t #'play-pattern [new-t sep-t (rest seq) sound])))
 
-(play-pattern (now) 200 (cycle [[] nil [] nil [] nil [0.5] nil]) hi-hat2)
+; (play-pattern (now) 200 (cycle [[] nil [] nil [] nil [0.5] nil]) hi-hat2)
 ; (play-pattern (now) 200 (cycle [[] nil nil nil [] nil [0.5] nil]) hi-hat2)
 
+(def hi-hat-seq [nil [] nil [] nil [] nil []])
+(def kick-seq [[] nil [] nil [] nil [] nil])
+; (def piano-seq [[60] [62] [65] [67] [69] [72] [74] [77]])
+(def piano-seq [[:c3 :major7] nil nil nil [:c3 :m7] nil nil nil])
+
+(defn play-all [sep-t patterns]
+  (let [t (+ (now) 200)]
+    (doseq [[sound pattern] patterns]
+      (play-pattern t sep-t pattern sound))))
+
+(play-all 250 {kick (cycle kick-seq)
+           hi-hat2 (cycle hi-hat-seq)
+           piano-chord (cycle piano-seq)})
