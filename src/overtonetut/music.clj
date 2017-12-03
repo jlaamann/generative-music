@@ -12,15 +12,12 @@
 	(midi->hz (note music-note)))
 
 
-; Plays chord that takes frequencies as parameters
-(defn hz-chord
-  ([instrument root chord-name]
-    (doseq [note (chord root chord-name)]
-      (instrument (note->hz note))))
-  ([instrument root chord-name inv]
-    (doseq [note (chord root chord-name inv)]
-      (instrument (note->hz note)))))
+; (def scale-degrees [:i :ii :iii :iv :v :vi :vii])
+    
+; (def pitches (degrees->pitches scale-degrees :pentatonic :C4))
+; (def pitches (scale :c3 :pentatonic))
 
+; INSTRUMENTS
 
 (defn piano-chord
   ([root chord-name]
@@ -30,10 +27,6 @@
     (doseq [note (chord root chord-name inv)]
       (sampled-piano note 0.5))))
 
-; (def scale-degrees [:i :ii :iii :iv :v :vi :vii])
-    
-; (def pitches (degrees->pitches scale-degrees :pentatonic :C4))
-; (def pitches (scale :c3 :pentatonic))
 
 (definst kick [freq 120 dur 0.3 width 0.5]
   (let [freq-env (* freq (env-gen (perc 0 (* 0.99 dur))))
@@ -49,25 +42,6 @@
 (def cymbal (sample (freesound-path 13254)))
 
 
-(defn string
-  [freq duration]
-  (with-overloaded-ugens
-    (* (line:kr 1 1 duration FREE)
-       (pluck (* (white-noise) (env-gen (perc 0.001 5) :action FREE))
-              1 1 (/ 1 freq) (* duration 2) 0.25))))
-
-
-(definst harpsichord [freq 440]
-  (let [duration 1
-        snd  (string freq duration)
-        t1   (* 0.2 (string (* 2/1 freq) duration))
-        t2   (* 0.15 (string (* 3/2 freq) duration))
-        t3   (* 0.1 (string (* 4/3 freq) duration))
-        t4   (* 0.1 (string (* 5/4 freq) duration))
-        snd  (+ snd (mix [t1 t2 t3 t4]))]
-    snd))
-
-
 (definst hi-hat1 [duration 0.1]
   (pan2 (* (env-gen (perc 0 duration :curve -9)) (white-noise))))
 
@@ -75,16 +49,6 @@
 ; hi pass filter, multiply by 2
 (definst hi-hat2 [duration 0.2]
   (pan2 (* 2 (env-gen (perc 0 duration :curve -9)) (hpf (white-noise) 9000))))
-
-
-(defn play-pattern [cur-t sep-t seq sound]
-  (at cur-t (when (first seq) (apply sound (first seq))))
-  (let [new-t (+ cur-t sep-t)]
-    (apply-by new-t #'play-pattern [new-t sep-t (rest seq) sound])))
-
-
-; (play-pattern (now) 200 (cycle [[] nil [] nil [] nil [0.5] nil]) hi-hat2)
-; (play-pattern (now) 200 (cycle [[] nil nil nil [] nil [0.5] nil]) hi-hat2)
 
 
 ; SEQUENCES
@@ -129,6 +93,17 @@
 ])
 
 
+; FUNCTIONS
+
+(defn play-pattern [cur-t sep-t seq sound]
+  (at cur-t (when (first seq) (apply sound (first seq))))
+  (let [new-t (+ cur-t sep-t)]
+    (apply-by new-t #'play-pattern [new-t sep-t (rest seq) sound])))
+
+; (play-pattern (now) 200 (cycle [[] nil [] nil [] nil [0.5] nil]) hi-hat2)
+; (play-pattern (now) 200 (cycle [[] nil nil nil [] nil [0.5] nil]) hi-hat2)
+
+
 (defn play-all [sep-t patterns]
   (let [t (+ (now) 200)]
     (doseq [[sound pattern] patterns]
@@ -139,8 +114,19 @@
   (play-all time {
             kick (cycle kick-seq)
             hi-hat1 (cycle hi-hat1-seq)
-            ; hi-hat2 (cycle hi-hat2-seq)
+            hi-hat2 (cycle hi-hat2-seq)
             piano-chord (cycle piano-seq)
             sampled-piano (cycle melody-seq)
+            ; sampled-piano (map list (repeatedly #(rand-int 100)))
+            ; sampled-piano (map list (repeatedly #(rand-note :c4 :c6)))
+            ; sampled-piano (map list (repeatedly #(rand-nth (scale :c6 :pentatonic))))
+            ; sampled-piano (map list (repeatedly #(rand-nth (scale :c6 :lydian))))
+            ; sampled-piano (map list (repeatedly #(rand-nth 
+              ; (concat (scale :c5 :lydian)(scale :c6 :lydian)))))
             cymbal (cycle cymbal-seq)
             }))
+
+
+(defn rand-note [min-note max-note]
+  (let [n (rand-int (- (note max-note) (note min-note)))]
+    (+ n (note min-note))))
